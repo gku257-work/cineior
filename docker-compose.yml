@@ -1,0 +1,117 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: cineior-db
+    environment:
+      POSTGRES_DB: cineior
+      POSTGRES_USER: cineior
+      POSTGRES_PASSWORD: cineior123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U cineior" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cineior-network
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: cineior-auth
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cineior
+      SPRING_DATASOURCE_USERNAME: cineior
+      SPRING_DATASOURCE_PASSWORD: cineior123
+      JWT_SECRET: cineior-secret-key-for-jwt-authentication-256-bits-long
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your_google_client_id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your_google_client_secret}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cineior-network
+
+  movie-service:
+    build:
+      context: ./backend/movie-service
+      dockerfile: Dockerfile
+    container_name: cineior-movie
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cineior
+      SPRING_DATASOURCE_USERNAME: cineior
+      SPRING_DATASOURCE_PASSWORD: cineior123
+      TMDB_API_KEY: ${TMDB_API_KEY:-your_tmdb_api_key}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cineior-network
+
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: cineior-user
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cineior
+      SPRING_DATASOURCE_USERNAME: cineior
+      SPRING_DATASOURCE_PASSWORD: cineior123
+      MOVIE_SERVICE_URL: http://movie-service:8082
+    depends_on:
+      postgres:
+        condition: service_healthy
+      movie-service:
+        condition: service_started
+    networks:
+      - cineior-network
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: cineior-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8081
+      MOVIE_SERVICE_URL: http://movie-service:8082
+      USER_SERVICE_URL: http://user-service:8083
+      JWT_SECRET: cineior-secret-key-for-jwt-authentication-256-bits-long
+    depends_on:
+      - auth-service
+      - movie-service
+      - user-service
+    networks:
+      - cineior-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cineior-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
+    depends_on:
+      - api-gateway
+    networks:
+      - cineior-network
+
+networks:
+  cineior-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

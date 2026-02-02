@@ -1,0 +1,64 @@
+name: Deploy to GCP Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  REPOSITORY: cineior-repo
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [auth-service, movie-service, user-service, api-gateway]
+        include:
+          - service: auth-service
+            folder: backend/auth-service
+          - service: movie-service
+            folder: backend/movie-service
+          - service: user-service
+            folder: backend/user-service
+          - service: api-gateway
+            folder: backend/api-gateway
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      - name: Build and Push Container
+        run: |
+          IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${{ matrix.service }}:${{ github.sha }}"
+          docker build -t $IMAGE_NAME ${{ matrix.include.folder }}
+          docker push $IMAGE_NAME
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${{ matrix.service }}:${{ github.sha }}"
+          gcloud run deploy ${{ matrix.service }} \
+            --image $IMAGE_NAME \
+            --region $REGION \
+            --platform managed \
+            --allow-unauthenticated \
+            --max-instances 1 \
+            --port 8080 \
+            --set-env-vars "SPRING_PROFILES_ACTIVE=prod"
