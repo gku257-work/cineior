@@ -45,15 +45,24 @@ jobs:
         run: |
           gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
+      - name: Debug Info
+        run: |
+          echo "Deploying ${{ matrix.service }} from folder ${{ matrix.folder }}"
+          echo "Project ID: ${PROJECT_ID}"
+          echo "Region: ${REGION}"
+          echo "Repository: ${REPOSITORY}"
+
       - name: Build and Push Container
         run: |
           IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${{ matrix.service }}:${{ github.sha }}"
-          docker build -t $IMAGE_NAME ${{ matrix.include.folder }}
+          echo "Building image: $IMAGE_NAME"
+          docker build -t $IMAGE_NAME ${{ matrix.folder }}
           docker push $IMAGE_NAME
 
       - name: Deploy to Cloud Run
         run: |
           IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${{ matrix.service }}:${{ github.sha }}"
+          echo "Deploying to Cloud Run: ${{ matrix.service }}"
           gcloud run deploy ${{ matrix.service }} \
             --image $IMAGE_NAME \
             --region $REGION \
