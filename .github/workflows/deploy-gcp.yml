@@ -13,6 +13,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         service: [auth-service, movie-service, user-service, api-gateway]
         include:
@@ -45,22 +46,34 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Enable GCP APIs
+        run: |
+          gcloud services enable artifactregistry.googleapis.com run.googleapis.com --quiet
+
+      - name: Ensure Artifact Registry exists
+        run: |
+          if ! gcloud artifacts repositories describe ${REPOSITORY} --location=${REGION} &>/dev/null; then
+            echo "Creating repository ${REPOSITORY}..."
+            gcloud artifacts repositories create ${REPOSITORY} \
+              --repository-format=docker \
+              --location=${REGION} \
+              --description="Docker repository for Cineior services"
+          fi
+
       - name: Configure Docker
         run: |
           gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
-      - name: Debug Info
-        run: |
-          echo "Deploying ${{ matrix.service }} from folder ${{ matrix.folder }}"
-          echo "Project ID: ${PROJECT_ID}"
-          echo "Region: ${REGION}"
-          echo "Repository: ${REPOSITORY}"
-
-      - name: Build and Push Container
+      - name: Build Container
         run: |
           IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${{ matrix.service }}:${{ github.sha }}"
           echo "Building image: $IMAGE_NAME"
           docker build -t $IMAGE_NAME ${{ matrix.folder }}
+
+      - name: Push Container
+        run: |
+          IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${{ matrix.service }}:${{ github.sha }}"
+          echo "Pushing image: $IMAGE_NAME"
           docker push $IMAGE_NAME
 
       - name: Deploy to Cloud Run
