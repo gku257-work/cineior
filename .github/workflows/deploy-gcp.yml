@@ -18,12 +18,16 @@ jobs:
         include:
           - service: auth-service
             folder: backend/auth-service
+            port: 8081
           - service: movie-service
             folder: backend/movie-service
+            port: 8082
           - service: user-service
             folder: backend/user-service
+            port: 8083
           - service: api-gateway
             folder: backend/api-gateway
+            port: 8080
 
     permissions:
       contents: 'read'
@@ -69,5 +73,5 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --max-instances 1 \
-            --port 8080 \
+            --port ${{ matrix.port }} \
             --set-env-vars "SPRING_PROFILES_ACTIVE=prod"
