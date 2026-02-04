@@ -27,21 +27,11 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Enable GCP APIs
-        run: |
-          gcloud services enable artifactregistry.googleapis.com run.googleapis.com --quiet
-
       - name: Ensure Artifact Registry exists
         run: |
-          if ! gcloud artifacts repositories describe ${REPOSITORY} --location=${REGION} &>/dev/null; then
-            echo "Creating repository ${REPOSITORY}..."
-            gcloud artifacts repositories create ${REPOSITORY} \
-              --repository-format=docker \
-              --location=${REGION} \
-              --description="Docker repository for Cineior services"
-          else
-            echo "Repository ${REPOSITORY} already exists."
-          fi
+          echo "Checking if repository ${REPOSITORY} exists..."
+          gcloud artifacts repositories describe ${REPOSITORY} --location=${REGION}
+
 
   deploy:
     needs: setup
