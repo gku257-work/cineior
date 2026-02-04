@@ -26,12 +26,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const savedUser = localStorage.getItem('user');
 
         if (savedToken && savedUser) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setToken(savedToken);
             setUser(JSON.parse(savedUser));
         }
         // Use a small delay or ensure this doesn't trigger a synchronous loop
         const timer = setTimeout(() => setIsLoading(false), 0);
         return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const login = async (email: string, password: string) => {

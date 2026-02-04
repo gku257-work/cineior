@@ -25,7 +25,7 @@ export default function SignupPage() {
         try {
             await register(name, email, password);
             router.push('/discover');
-        } catch (_err) {
+        } catch {
             setError('Registration failed. Please try again.');
         } finally {
             setIsLoading(false);
