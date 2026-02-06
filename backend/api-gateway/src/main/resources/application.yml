@@ -11,9 +11,10 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins:
+            allowedOriginPatterns:
               - "http://localhost:3000"
               - "https://*.vercel.app"
+              - "https://cineior.vercel.app"
             allowedMethods:
               - GET
               - POST
@@ -28,6 +29,14 @@ spring:
           uri: ${AUTH_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+        
+        # Auth Service OAuth2
+        - id: auth-service-oauth
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/oauth2/**
           filters:
             - StripPrefix=1
             
