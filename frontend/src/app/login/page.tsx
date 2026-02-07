@@ -134,7 +134,7 @@ export default function LoginPage() {
 
                     {/* Google OAuth Button */}
                     <button
-                        onClick={() => window.location.href = 'http://localhost:8081/oauth2/authorization/google'}
+                        onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/oauth2/authorization/google`}
                         className="w-full btn-secondary py-3 flex items-center justify-center gap-2"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">

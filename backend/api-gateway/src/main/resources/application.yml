@@ -6,15 +6,16 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      default-filters: []
       globalcors:
+        add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
-            allowedOriginPatterns:
+            allowedOrigins:
               - "http://localhost:3000"
-              - "https://*.vercel.app"
               - "https://cineior.vercel.app"
+            allowedOriginPatterns:
+              - "https://*.vercel.app"
             allowedMethods:
               - GET
               - POST

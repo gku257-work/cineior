@@ -29,6 +29,10 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
+            if (request.getMethod().name().equals("OPTIONS")) {
+                return chain.filter(exchange);
+            }
+
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {

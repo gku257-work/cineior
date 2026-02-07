@@ -105,4 +105,7 @@ jobs:
             --set-env-vars "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
             --set-env-vars "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" \
             --set-env-vars "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" \
-            --set-env-vars "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
+            --set-env-vars "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            --set-env-vars "AUTH_SERVICE_URL=${{ secrets.AUTH_SERVICE_URL }}" \
+            --set-env-vars "MOVIE_SERVICE_URL=${{ secrets.MOVIE_SERVICE_URL }}" \
+            --set-env-vars "USER_SERVICE_URL=${{ secrets.USER_SERVICE_URL }}"
